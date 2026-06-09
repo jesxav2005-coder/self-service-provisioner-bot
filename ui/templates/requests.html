@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Open Provision Requests</title>
+    <link rel="stylesheet" href="/static/style.css">
+  </head>
+  <body>
+    <main class="container">
+      <h1>Open Provision Requests</h1>
+      {% if issues %}
+        <ul class="list">
+          {% for it in issues %}
+            <li>
+              <a href="{{ it.html_url }}" target="_blank">#{{ it.number }} - {{ it.title }}</a>
+              <div class="meta">Created at {{ it.created_at }} by {{ it.user.login }}</div>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p>No open provision requests found.</p>
+      {% endif %}
+
+      <p><a href="/">Back to form</a></p>
+    </main>
+  </body>
+</html>

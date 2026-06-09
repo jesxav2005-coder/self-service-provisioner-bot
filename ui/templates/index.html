@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Self-Service Provisioner</title>
+    <link rel="stylesheet" href="/static/style.css">
+  </head>
+  <body>
+    <main class="container">
+      <h1>Self-Service Provisioner</h1>
+      <p>Submit an environment provisioning request and the repo automation will create a GitHub issue labeled <strong>{{ label }}</strong>.</p>
+
+      <form action="/submit" method="post" class="form">
+        <label>Environment type
+          <select name="env_type" required>
+            <option value="docker">docker</option>
+            <option value="aws">aws</option>
+            <option value="terraform">terraform</option>
+          </select>
+        </label>
+
+        <label>Environment name
+          <select name="env_name" required>
+            <option value="dev">dev</option>
+            <option value="qa">qa</option>
+            <option value="staging">staging</option>
+            <option value="prod">prod</option>
+          </select>
+        </label>
+
+        <label>Request details
+          <textarea name="request_details" rows="5" placeholder="Describe what you need and any extra context."></textarea>
+        </label>
+
+        <label>Requester name
+          <input name="requester" type="text" placeholder="Your name or team">
+        </label>
+
+        <div class="actions">
+          <button type="submit">Create Provision Request</button>
+          <a class="link" href="/requests">View requests</a>
+        </div>
+      </form>
+
+      <footer class="foot">Issues will be created in <code>{{ repo }}</code>.</footer>
+    </main>
+  </body>
+</html>
