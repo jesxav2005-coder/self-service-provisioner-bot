@@ -13,6 +13,7 @@ defaults:
     - alice
     - yakhaiyum
     - jeshintha
+    - jesxav2005-coder
   default_effect: deny
 
 rules:
