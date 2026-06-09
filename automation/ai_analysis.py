@@ -31,6 +31,10 @@ def _parse_request_from_issue(title: str, body: str, author: str | None):
         env = "prod"
     elif "staging" in text:
         env = "staging"
+    elif "qa" in text:
+        env = "qa"
+    elif "test" in text:
+        env = "test"
 
     user = author or "unknown"
     return {"type": t, "env": env, "user": user}
