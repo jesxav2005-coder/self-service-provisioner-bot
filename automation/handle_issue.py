@@ -12,6 +12,9 @@ import os
 import sys
 from pathlib import Path
 
+ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT))
+
 from policy_engine.policy import PolicyEngine
 from automation.ai_analysis import _parse_request_from_issue
 import automation.create_pr as create_pr

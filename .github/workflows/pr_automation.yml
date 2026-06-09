@@ -13,7 +13,7 @@ jobs:
           python-version: "3.14"
       - run: python -m pip install --upgrade pip
       - run: pip install -r requirements.txt
-      - run: python automation/create_pr.py
+      - run: python -m automation.create_pr
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}

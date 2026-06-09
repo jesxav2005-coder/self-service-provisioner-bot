@@ -35,4 +35,4 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
         run: |
-          python automation/handle_issue.py --event-path "$GITHUB_EVENT_PATH"
+          python -m automation.handle_issue --event-path "$GITHUB_EVENT_PATH"
