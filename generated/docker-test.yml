@@ -1,0 +1,10 @@
+version: "3"
+
+services:
+  web:
+    image: nginx
+    container_name: web_server_test
+    environment:
+      - ENVIRONMENT=test
+    ports:
+      - "8080:80"
