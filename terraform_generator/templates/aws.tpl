@@ -1,8 +1,9 @@
-resource "aws_instance" "web_server" {
+resource "aws_instance" "web_server_{{ENV_NAME}}" {
   ami           = "ami-123456"
-  instance_type = "t2.micro"
+  instance_type = "{{INSTANCE_TYPE}}"
 
   tags = {
-    Name = "ProvisionedServer"
+    Name        = "ProvisionedServer"
+    Environment = "{{ENV_NAME}}"
   }
 }

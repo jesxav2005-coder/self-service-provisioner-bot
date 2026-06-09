@@ -19,7 +19,13 @@ class PolicyEngine:
             raise PolicyError(f"Policy file not found: {self.policy_path}")
 
         with self.policy_path.open("r", encoding="utf-8") as stream:
-            config = yaml.safe_load(stream) or {}
+            try:
+                config = yaml.safe_load(stream) or {}
+            except yaml.YAMLError as exc:
+                raise PolicyError(f"Invalid YAML policy file: {exc}") from exc
+
+        if not isinstance(config, dict):
+            raise PolicyError("Policy file must contain a mapping at the top level.")
 
         self.defaults = config.get("defaults", {})
         self.rules = config.get("rules", [])
