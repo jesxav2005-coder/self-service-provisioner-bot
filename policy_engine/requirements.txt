@@ -1,0 +1,7 @@
+fastapi
+uvicorn[standard]
+pyyaml
+pytest
+requests
+python-dotenv
+discord.py

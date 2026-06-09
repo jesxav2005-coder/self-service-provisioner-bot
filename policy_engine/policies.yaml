@@ -1,0 +1,36 @@
+
+version: 1
+
+defaults:
+  allowed_types:
+    - docker
+    - aws
+  allowed_envs:
+    - dev
+    - test
+    - qa
+  authorized_users:
+    - alice
+    - yakhaiyum
+    - jeshintha
+  default_effect: deny
+
+rules:
+  - name: allow_docker
+    description: Allow Docker environments for any supported allowed env.
+    conditions:
+      type:
+        - docker
+    effect: allow
+    message: Docker provisioning is allowed.
+
+  - name: allow_aws_nonprod
+    description: Allow AWS development and testing environments.
+    conditions:
+      type:
+        - aws
+      env:
+        - dev
+        - test
+    effect: allow
+    message: AWS dev/test provisioning is allowed.

@@ -1,7 +1,10 @@
 import discord
 from discord import app_commands
-import os, requests
+import os
+import requests
 from dotenv import load_dotenv
+
+from terraform_generator.generator import generate
 
 load_dotenv()
 TOKEN = os.getenv("DISCORD_TOKEN")
@@ -17,9 +20,21 @@ tree = app_commands.CommandTree(client)
 async def provision(interaction: discord.Interaction, type: str, env: str):
     await interaction.response.defer()
     try:
-        resp = requests.post(POLICY_URL, json={"type": type, "env": env}, timeout=30)
+        resp = requests.post(
+            POLICY_URL,
+            json={"type": type, "env": env, "user": interaction.user.name},
+            timeout=30,
+        )
         result = resp.json()
-        msg = f"✅ **Provision Request Received!**\n`type={type}` `env={env}`\n\n{result.get('message', 'Sent to policy engine.')}"
+        if result.get("allowed"):
+            template = generate(type)
+            msg = (
+                f"✅ **Provision Request Received!**\n`type={type}` `env={env}`\n\n"
+                f"{result.get('message', 'Sent to policy engine.')}\n\n"
+                f"**Generated IaC template:**\n```\n{template}\n```"
+            )
+        else:
+            msg = f"⚠️ Provision request denied:\n{result.get('message', 'Denied by policy.')}"
     except Exception as e:
         msg = f"⚠️ Policy engine not connected yet.\n`/provision type={type} env={env}` logged successfully!"
 
