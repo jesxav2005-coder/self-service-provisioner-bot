@@ -1,0 +1,57 @@
+name: Apply generated infra
+
+on:
+  pull_request:
+    types: [closed]
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  apply:
+    # only run when a PR was merged
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt || true
+
+      - name: Show generated files
+        run: |
+          echo "This job performs the final apply step after a PR is merged. The job is protected by the 'production' environment and requires approval to proceed."
+          ls -la generated || true
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.6.0
+
+      - name: Terraform init
+        working-directory: generated
+        run: |
+          terraform init -input=false || true
+
+      - name: Terraform plan
+        working-directory: generated
+        run: |
+          terraform plan -out=tfplan || true
+
+      - name: Terraform apply
+        if: success()
+        working-directory: generated
+        run: |
+          echo "Applying terraform (this step runs only after the job is approved via 'production' environment)."
+          terraform apply -input=false -auto-approve tfplan

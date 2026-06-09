@@ -6,3 +6,5 @@ requests
 PyGithub
 python-dotenv
 discord.py
+Jinja2
+python-multipart
