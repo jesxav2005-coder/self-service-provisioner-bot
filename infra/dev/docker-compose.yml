@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  
+  web:
+    image: nginx:alpine
+    
+    ports:
+      
+      - "80:80"
+      
+    
+    
+    environment:
+      
+      - ENV=production
+      
+    
+    
+    
+    restart: always
+
+  
+  cache:
+    image: redis:7-alpine
+    
+    ports:
+      
+      - "6379:6379"
+      
+    
+    
+    
+    
+    restart: always
+
+  
