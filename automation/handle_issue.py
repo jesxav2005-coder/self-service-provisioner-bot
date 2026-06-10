@@ -62,9 +62,15 @@ def main():
     # Generate only the requested env/type
     env_type = req.get("type")
     env_name = req.get("env")
+    issue_number = issue.get("number", 0)
 
     print(f"Generating infra for {env_type}/{env_name}...")
-    generated_files = create_pr.generate_infra_files(env_types=[env_type], env_names=[env_name])
+    # Generate with unique identifier per request issue to guarantee changes are detected
+    generated_files = create_pr.generate_infra_files(
+        env_types=[env_type], 
+        env_names=[env_name],
+        identifier=f"req{issue_number}"
+    )
 
     branch_name = create_pr.git_branch_name()
     print(f"Branch name would be: {branch_name}")
@@ -80,10 +86,13 @@ def main():
     create_pr.create_git_branch(branch_name)
 
     print("Committing generated files")
-    create_pr.commit_generated_files(generated_files, branch_name)
+    has_changes = create_pr.commit_generated_files(generated_files, branch_name)
+    if not has_changes:
+        print("No new changes detected. Skipping PR creation to avoid invalid branch reference.")
+        return
 
     pr_title = f"Auto: add {env_type} {env_name} environment"
-    pr_body = f"Generated from issue #{issue.get('number')} by automation. Policy: {result.get('message')}"
+    pr_body = f"Generated from issue #{issue_number} by automation. Policy: {result.get('message')}"
     print("Creating PR...")
     create_pr.create_pull_request(branch_name, pr_title, pr_body, base_branch=os.getenv("BASE_BRANCH", "main"))
 
