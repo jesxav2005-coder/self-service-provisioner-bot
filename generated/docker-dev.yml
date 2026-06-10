@@ -3,8 +3,8 @@ version: "3"
 services:
   web:
     image: nginx
-    container_name: web_server_{{ENV_NAME}}
+    container_name: web_server_dev
     environment:
-      - ENVIRONMENT={{ENV_NAME}}
+      - ENVIRONMENT=dev
     ports:
       - "8080:80"

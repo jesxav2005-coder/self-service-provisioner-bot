@@ -3,5 +3,9 @@ uvicorn[standard]
 pyyaml
 pytest
 requests
+PyGithub
 python-dotenv
 discord.py
+python-multipart
+openai
+huggingface-hub

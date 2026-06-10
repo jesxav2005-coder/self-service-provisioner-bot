@@ -1,0 +1,11 @@
+{
+  "action": "labeled",
+  "issue": {
+    "number": 1,
+    "title": "Provision Docker dev",
+    "body": "Please provision docker dev environment for alice",
+    "user": { "login": "alice" },
+    "labels": [{"name":"auto-provision"}]
+  },
+  "label": { "name": "auto-provision" }
+}
