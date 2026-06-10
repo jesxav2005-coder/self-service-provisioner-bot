@@ -1,0 +1,14 @@
+version: "3.8"
+# Auto-generated for dev environment
+services:
+  app:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    networks:
+      - app_network
+
+networks:
+  app_network:
+    driver: bridge
+
