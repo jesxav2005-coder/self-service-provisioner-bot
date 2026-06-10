@@ -37,7 +37,7 @@ jobs:
 
       - name: Run auto-provision handler
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ github.token }}
           GITHUB_REPOSITORY: ${{ github.repository }}
         run: |
           python -m automation.handle_issue --event-path "$GITHUB_EVENT_PATH" --live

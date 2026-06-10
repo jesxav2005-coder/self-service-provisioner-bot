@@ -90,7 +90,7 @@ def create_pull_request(branch_name: str, title: str, body: str, base_branch: st
     if not github_token or not repository:
         raise RuntimeError("GITHUB_TOKEN and GITHUB_REPOSITORY (or GITHUB_REPO) must be set to create a PR.")
 
-    gh = Github(github_token)
+    gh = Github(github_token.strip())
     repo = gh.get_repo(repository)
     existing = list(repo.get_pulls(state="open", head=f"{repo.owner.login}:{branch_name}"))
     if existing:
