@@ -34,23 +34,52 @@ jobs:
           echo "This job performs the final apply step after a PR is merged. The job is protected by the 'production' environment and requires approval to proceed."
           ls -la generated || true
 
+      - name: Check for Terraform files
+        id: check_tf_files
+        working-directory: generated
+        run: |
+          shopt -s nullglob
+          tf_files=( *.tf )
+          if [ ${#tf_files[@]} -gt 0 ]; then
+            echo "tf_files_exist=true" >> $GITHUB_ENV
+          else
+            echo "tf_files_exist=false" >> $GITHUB_ENV
+            echo "No Terraform files found; skipping terraform plan/apply (YAML-only deployment)."
+          fi
+
       - name: Set up Terraform
+        if: env.tf_files_exist == 'true'
         uses: hashicorp/setup-terraform@v2
         with:
           terraform_version: 1.6.0
 
       - name: Terraform init
+        if: env.tf_files_exist == 'true'
         working-directory: generated
         run: |
-          terraform init -input=false || true
+          terraform init -input=false
 
       - name: Terraform plan
+        id: terraform_plan
+        if: env.tf_files_exist == 'true'
         working-directory: generated
         run: |
-          terraform plan -out=tfplan || true
+          terraform plan -out=tfplan
+
+      - name: Check Terraform plan artifact
+        id: check_tfplan
+        if: env.tf_files_exist == 'true' && steps.terraform_plan.outcome == 'success'
+        working-directory: generated
+        run: |
+          if [ -f tfplan ]; then
+            echo "tfplan_exists=true" >> $GITHUB_ENV
+          else
+            echo "tfplan_exists=false" >> $GITHUB_ENV
+            echo "Terraform plan succeeded but tfplan is missing; skipping apply."
+          fi
 
       - name: Terraform apply
-        if: success()
+        if: env.tfplan_exists == 'true'
         working-directory: generated
         run: |
           echo "Applying terraform (this step runs only after the job is approved via 'production' environment)."
