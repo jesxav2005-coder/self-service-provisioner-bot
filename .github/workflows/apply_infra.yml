@@ -1,0 +1,104 @@
+name: Apply generated infra
+
+on:
+  pull_request:
+    types: [closed]
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  apply:
+    # only run when a PR was merged
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt || true
+
+      - name: Show generated files
+        run: |
+          echo "This job performs the final apply step after a PR is merged. The job is protected by the 'production' environment and requires approval to proceed."
+          ls -la generated || true
+
+      - name: Check for Terraform files
+        id: check_tf_files
+        working-directory: generated
+        run: |
+          shopt -s nullglob
+          tf_files=( *.tf )
+          if [ ${#tf_files[@]} -gt 0 ]; then
+            echo "tf_files_exist=true" >> $GITHUB_ENV
+          else
+            echo "tf_files_exist=false" >> $GITHUB_ENV
+            echo "No Terraform files found; skipping terraform plan/apply (YAML-only deployment)."
+          fi
+
+      - name: Set up Terraform
+        if: env.tf_files_exist == 'true'
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.6.0
+
+      - name: Terraform init
+        if: env.tf_files_exist == 'true'
+        working-directory: generated
+        run: |
+          terraform init -input=false
+
+      - name: Terraform plan
+        id: terraform_plan
+        if: env.tf_files_exist == 'true'
+        working-directory: generated
+        run: |
+          terraform plan -out=tfplan
+
+      - name: Check Terraform plan artifact
+        id: check_tfplan
+        if: env.tf_files_exist == 'true' && steps.terraform_plan.outcome == 'success'
+        working-directory: generated
+        run: |
+          if [ -f tfplan ]; then
+            echo "tfplan_exists=true" >> $GITHUB_ENV
+          else
+            echo "tfplan_exists=false" >> $GITHUB_ENV
+            echo "Terraform plan succeeded but tfplan is missing; skipping apply."
+          fi
+
+      - name: Terraform apply
+        if: env.tf_files_exist == 'true' && env.tfplan_exists == 'true'
+        working-directory: generated
+        run: |
+          echo "Applying terraform (this step runs only after the job is approved via 'production' environment)."
+          terraform apply -input=false -auto-approve tfplan
+
+      - name: Notify originating issue and close it
+        if: success()
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const prBody = context.payload.pull_request.body || '';
+            const prUrl = context.payload.pull_request.html_url || '';
+            const m = prBody.match(/#(\d+)/);
+            if (m) {
+              const issue_number = parseInt(m[1], 10);
+              const message = `✅ Deployment complete. Infrastructure from this PR has been applied. Related PR: ${prUrl}`;
+              await github.rest.issues.createComment({ owner: context.repo.owner, repo: context.repo.repo, issue_number, body: message });
+              await github.rest.issues.update({ owner: context.repo.owner, repo: context.repo.repo, issue_number, state: 'closed' });
+              console.log(`Notified and closed issue #${issue_number}`);
+            } else {
+              console.log('No referenced issue number found in PR body; skipping issue notification.');
+            }

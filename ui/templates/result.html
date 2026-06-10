@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Request Created</title>
+    <link rel="stylesheet" href="/static/style.css">
+  </head>
+  <body>
+    <main class="container">
+      <h1>Request created</h1>
+      <p>Issue <strong>#{{ issue.number }}</strong> was created successfully.</p>
+      <p><a href="{{ issue.html_url }}" target="_blank">Open issue in GitHub</a></p>
+      <p><a href="/">Submit another request</a></p>
+    </main>
+  </body>
+</html>
