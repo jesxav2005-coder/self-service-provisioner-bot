@@ -28,8 +28,12 @@ def load_event(path: str):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--event-path", default=os.getenv("GITHUB_EVENT_PATH"))
+    parser.add_argument("--live", action="store_true", help="Run live automation and create PR")
     parser.add_argument("--dry-run", action="store_true", help="Do not push or create PR; just simulate")
     args = parser.parse_args()
+
+    # Default to dry-run unless --live is specified, or if --dry-run is explicitly specified
+    dry_run = args.dry_run or not args.live
 
     if not args.event_path:
         print("GITHUB event path must be provided via --event-path or GITHUB_EVENT_PATH", file=sys.stderr)
@@ -75,7 +79,7 @@ def main():
     branch_name = create_pr.git_branch_name()
     print(f"Branch name would be: {branch_name}")
 
-    if args.dry_run:
+    if dry_run:
         print("Dry run enabled — not creating branch, committing, or opening PR.")
         print("Generated files:")
         for p in generated_files:

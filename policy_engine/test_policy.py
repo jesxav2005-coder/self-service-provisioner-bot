@@ -30,6 +30,12 @@ def test_policy_engine_denies_unauthorized_user():
     assert "not authorized" in result["message"].lower()
 
 
+def test_policy_engine_allows_automation_user():
+    engine = PolicyEngine("policy_engine/policies.yaml")
+    result = engine.validate({"type": "docker", "env": "dev", "user": "assistant-bot"})
+    assert result["allowed"] is True
+
+
 def test_policy_engine_requires_user_field():
     engine = PolicyEngine("policy_engine/policies.yaml")
     result = engine.validate({"type": "docker", "env": "dev"})

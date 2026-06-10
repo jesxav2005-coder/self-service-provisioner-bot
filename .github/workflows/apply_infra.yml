@@ -79,7 +79,7 @@ jobs:
           fi
 
       - name: Terraform apply
-        if: env.tfplan_exists == 'true'
+        if: env.tf_files_exist == 'true' && env.tfplan_exists == 'true'
         working-directory: generated
         run: |
           echo "Applying terraform (this step runs only after the job is approved via 'production' environment)."
