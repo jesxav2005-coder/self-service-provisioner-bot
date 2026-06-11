@@ -1,91 +1,95 @@
 # Self-Service Provisioner Bot
 
-This repository contains automation to accept issue-based requests, validate them against a policy engine, generate infrastructure templates, and open PRs with the generated files.
+An AI-powered developer portal for self-service infrastructure provisioning. It translates natural language environment requests into working Docker Compose configurations or AWS Terraform setups, handles GitOps code submissions (GitHub Issues & Pull Requests), and automates notification flows.
 
-## Quick start (local)
+---
 
-1. Create and export a GitHub token (for local testing only):
+## Features
+- **Modern Developer Dashboard**: Glassmorphism stats cards, responsive forms, and live status tracking.
+- **Interactive AI Chat Assistant**: Floating assistant widget with quick suggested action chips to guide developers.
+- **Policy Engine Guardrails**: Validates configurations against `policy.yaml` limits (allowed stages, types, and max service limits).
+- **Auto Code Generation**: Outputs fully functional multi-service `docker-compose.yml` configurations or AWS Terraform (`main.tf`, `variables.tf`, `provider.tf`) script layouts.
+- **GitOps GitHub API Integration**: Auto-creates tracking Issues labeled `auto-provision` and opens Pull Requests (PRs) with the generated files.
+- **Auto-Deployment Pipeline**: A GitHub Actions workflow (`deploy.yml`) runs on merges to validate code and call the backend deployment webhook.
+- **Double Email Notifications**:
+  - **Dev Team Notification**: Alert sent upon request submission (with links to PR and Issue).
+  - **Requester Notification**: Alert sent to the developer once the PR is merged and deployed successfully.
 
-```powershell
-$env:GITHUB_TOKEN = "ghp_xxx"
-$env:GITHUB_REPOSITORY = "owner/repo"
+---
+
+## Setup & Run
+
+### 1. Installation
+```bash
+cd provisioner-bot
+python -m venv venv
+source venv/bin/activate  # Windows: venv\Scripts\activate
+pip install -r requirements.txt
+cp .env.example .env
 ```
 
-2. Start the policy engine:
+### 2. Configure Environment Variables
+Open the `.env` file and set the keys:
+```env
+# Hugging Face AI
+HF_API_KEY=your_key  # Optional: defaults to keyword matching if empty
+HF_MODEL=google/flan-t5-small
 
-```powershell
-py -3 -m uvicorn policy_engine.main:app --reload --port 8001
+# GitHub integration
+GITHUB_TOKEN=your_token
+GITHUB_REPO=owner/repo-name
+
+# Resend Email Integration (Recommended)
+RESEND_API_KEY=your_resend_api_key
+ADMIN_EMAIL=admin@yourdomain.com
+REQUESTER_EMAIL=tester@yourdomain.com
+
+# Alternate SMTP Email Configuration
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your_email@gmail.com
+SMTP_PASSWORD=your_app_password
+SMTP_FROM=noreply@provisionerbot.com
+DEV_TEAM_EMAIL=devteam@yourcompany.com
 ```
 
-3. Run the automation handler in dry-run mode (safe):
+### 3. Run Application
+```bash
+uvicorn app:app --reload --port 8000
+```
+Visit dashboard at: **http://127.0.0.1:8000**
 
-```powershell
-py -3 automation/handle_issue.py --event-path sample-event.json --dry-run
+### 4. Run Tests
+```bash
+pytest tests/test_api.py -v
 ```
 
-4. To perform an actual run (will push and open PR), ensure `GITHUB_TOKEN` and `GITHUB_REPOSITORY` are set and run without `--dry-run`.
+---
 
-## GitHub Actions
-The workflow `.github/workflows/auto_provision.yml` triggers on issues labeled `auto-provision` and runs the handler in the Actions runner.
+## API Documentation
 
-## User interface
-A simple UI is available at `ui/app.py` to let users submit provisioning requests through a web form.
-It creates a GitHub issue labeled `auto-provision` so the existing workflow can run.
+| Method | Endpoint                    | Description |
+|--------|-----------------------------|-------------|
+| **GET** | `/`                         | Serves Dashboard portal |
+| **GET** | `/requests`                 | Serves Request tracker log view |
+| **GET** | `/api/requests`             | Returns list of all requests in SQLite database |
+| **GET** | `/api/status`               | Returns active integrations and Mock Mode status |
+| **POST**| `/api/validate`             | Validates types/stages against security policies |
+| **POST**| `/api/parse`                | AI/keyword parser endpoint |
+| **POST**| `/api/chat`                 | Chat assistant interface (with mock keywords) |
+| **POST**| `/api/submit`               | Submission workflow (engine check, code gen, Issue/PR, Dev Email) |
+| **POST**| `/api/complete/{request_id}`| Webhook called by CI/CD to flag complete and email requester |
 
-Run the UI locally with:
+---
 
-```powershell
-$env:GITHUB_TOKEN = "ghp_xxx"
-$env:GITHUB_REPOSITORY = "owner/repo"
-py -3 -m uvicorn ui.app:app --reload --port 8002
+## GitOps Deployment Webhook Callbacks
+
+When a Pull Request is merged into `main`, the `.github/workflows/deploy.yml` runner validates syntax and hits the callback endpoint to send the completion email:
+```bash
+# Handled automatically inside deploy.yml:
+curl -s -X POST "http://localhost:8000/api/complete/{request_id}"
 ```
-
-Then open `http://localhost:8002` in your browser.
-
-## Issue requests
-Use the repository issue template `Auto Provision Request` to create a provisioning request.
-The issue should include the requested environment type and name, and be labeled `auto-provision`.
-
-Example request:
-
-- Title: `Provision Docker dev`
-- Body: `Please provision docker dev environment for alice.`
-
-## Security
-- Use fine-grained tokens and store them as repository secrets for Actions.
-- Do not commit tokens or `.env` files with secrets.
-
-## Apply workflow (optional/manual)
-
-When a generated infra PR is merged into the repository, the workflow `.github/workflows/apply_infra.yml` is configured to run. For safety this job is bound to the `production` environment which requires a manual approval by a repository admin or environment approver before the job proceeds.
-
-Notes:
-- The current `apply_infra.yml` contains a placeholder step rather than running actual `terraform apply`. Replace the placeholder with your real deployment commands and ensure secrets and environment protections are configured in the repository settings.
-- To enable automatic apply you can remove the `environment` requirement, but this is not recommended for production without safeguards.
-
-Required setup to actually run Terraform in CI:
-
-- Add your cloud credentials as repository secrets (example names): `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `GOOGLE_CREDENTIALS`, etc., depending on provider.
-- Configure a `production` environment under the repository Settings → Environments and add one or more approvers. The `apply_infra.yml` job uses this environment to require manual approval before performing `terraform apply`.
-- Ensure the `generated/` folder contains a valid Terraform configuration at merge time (the automation creates these files in the PR).
-
-Local smoke test (recommended):
-
-```powershell
-# Start the policy engine
-py -3 -m uvicorn policy_engine.main:app --reload --port 8001
-
-# Run the handler in dry-run to see generated files
-py -3 automation/handle_issue.py --event-path sample-event.json --dry-run
-
-# Inspect the generated files
-dir generated
-
-# If you want to try terraform locally (requires terraform installed):
-cd generated
-terraform init
-terraform plan
-terraform apply -auto-approve
+To test this callback locally, run:
+```bash
+python -c "import requests; requests.post('http://localhost:8000/api/complete/{request_id}')"
 ```
-
-*** End Patch
