@@ -65,5 +65,11 @@ jobs:
               cd - > /dev/null
             else
               echo "No actionable deployment files found in $dir."
+              continue
             fi
+
+            # Notify Provisioner Bot backend of completion
+            REQ_ID=$(basename "$dir")
+            echo "Notifying Provisioner Bot backend of completion for request ID: $REQ_ID"
+            curl -s -X POST "http://localhost:8000/api/complete/$REQ_ID" || true
           done
