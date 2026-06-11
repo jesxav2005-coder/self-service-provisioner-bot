@@ -37,7 +37,10 @@ def generate_infra_files(env_types=None, env_names=None, identifier: str | None 
     files = []
     for env_type in env_types:
         for env_name in env_names:
-            content = generate(env_type, env_name)
+            if identifier:
+                content = generate(env_type, env_name, identifier=identifier)
+            else:
+                content = generate(env_type, env_name)
             suffix = "yml" if env_type == "docker" else "tf"
             if identifier:
                 filename = f"{env_type}-{env_name}-{identifier}.{suffix}"

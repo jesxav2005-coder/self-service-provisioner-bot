@@ -12,7 +12,7 @@ def _get_instance_type(env_name: str) -> str:
     return "t2.micro"
 
 
-def generate(environment_type: str, env_name: str = "dev") -> str:
+def generate(environment_type: str, env_name: str = "dev", identifier: str = "") -> str:
     if environment_type.lower() == "docker":
         file_path = os.path.join(BASE_DIR, "templates", "docker.tpl")
     elif environment_type.lower() == "aws":
@@ -23,12 +23,15 @@ def generate(environment_type: str, env_name: str = "dev") -> str:
     with open(file_path, "r", encoding="utf-8") as file:
         template = file.read()
 
+    id_suffix = f"_{identifier}" if identifier else ""
+
     if environment_type.lower() == "docker":
-        return template.replace("{{ENV_NAME}}", env_name)
+        return template.replace("{{ENV_NAME}}", env_name).replace("{{IDENTIFIER}}", id_suffix)
 
     return template.replace("{{ENV_NAME}}", env_name).replace(
         "{{INSTANCE_TYPE}}", _get_instance_type(env_name)
-    )
+    ).replace("{{IDENTIFIER}}", id_suffix)
+
 
 
 if __name__ == "__main__":
