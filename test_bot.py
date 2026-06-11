@@ -49,11 +49,16 @@ app_commands_module = types.ModuleType("discord.app_commands")
 app_commands_module.CommandTree = DummyTree
 app_commands_module.describe = DummyTree.describe
 
+class DummyInteraction:
+    pass
+
 discord_module.app_commands = app_commands_module
 discord_module.Intents = DummyIntents
 discord_module.Client = DummyClient
+discord_module.Interaction = DummyInteraction
 sys.modules["discord"] = discord_module
 sys.modules["discord.app_commands"] = app_commands_module
+
 
 import bot
 
