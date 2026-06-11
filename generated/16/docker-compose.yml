@@ -1,0 +1,12 @@
+version: "3.8"
+# Auto-generated for dev environment
+services:
+  redis:
+    image: redis:7-alpine
+    networks:
+      - app_network
+
+networks:
+  app_network:
+    driver: bridge
+
